@@ -17,19 +17,24 @@ fn parse_game(input: &str) -> (u32, Vec<Vec<(i32, &str)>>) {
     let caps = re.captures(input).unwrap();
 
     // parse the game information
-    let id = caps.get(1).map_or("0", |m| m.as_str()).parse::<u32>().unwrap();
+    let id = caps
+        .get(1)
+        .map_or("0", |m| m.as_str())
+        .parse::<u32>()
+        .unwrap();
     let rounds = caps.get(2).map_or("", |m| m.as_str());
 
     // parse the rounds of each game
     for round in rounds.split(";") {
-        return_vec.push(round
-            .split(",")
-            .map(|m| {
-                let this: Vec <_> = m.split_whitespace().collect();
-                // (number, color)
-                (this[0].parse::<i32>().unwrap(), this[1])
-            })
-            .collect::<Vec<_>>()
+        return_vec.push(
+            round
+                .split(",")
+                .map(|m| {
+                    let this: Vec<_> = m.split_whitespace().collect();
+                    // (number, color)
+                    (this[0].parse::<i32>().unwrap(), this[1])
+                })
+                .collect::<Vec<_>>(),
         );
     }
 

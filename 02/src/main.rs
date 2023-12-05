@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::cmp::max;
 use std::collections::HashMap;
 
 fn main() {
@@ -69,6 +70,38 @@ fn part1(input: &str) -> u32 {
 
 fn part2(input: &str) -> u32 {
     let mut sum: u32 = 0;
+
+    for line in input.lines() {
+        let mut game: HashMap<&str, i32> = HashMap::new();
+        let (_, rounds) = parse_game(line);
+        for round in rounds {
+            // create a bag for this round
+            let mut bag: HashMap<&str, i32> = HashMap::new();
+
+            // pull out blocks and count the number of each color
+            for (num, block) in round {
+                if bag.contains_key(block) {
+                    let count = bag.get_mut(block).unwrap();
+                    *count += num;
+                } else {
+                    bag.insert(block, num);
+                }
+            }
+
+            // check the current round result against the game totals
+            // assign whichever value is higher
+            for (block, num) in bag {
+                if game.contains_key(block) {
+                    let current = game.get_mut(block).unwrap();
+                    *current = max(num, *current);
+                } else {
+                    game.insert(block, num);
+                }
+            }
+        }
+        // multiply the final count of blocks together and add it to the total
+        sum += game.values().copied().reduce(|acc, e| acc * e).unwrap() as u32;
+    }
     sum
 }
 

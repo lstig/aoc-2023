@@ -10,32 +10,37 @@ fn main() {
 
 const BAG: [(&'static str, i32); 3] = [("red", 12), ("green", 13), ("blue", 14)];
 
+fn parse_game(input: &str) -> (u32, Vec<Vec<(i32, &str)>>) {
+    let mut return_vec = Vec::new();
+
+    let re = Regex::new(r"^Game (\d+): (.+)$").unwrap();
+    let caps = re.captures(input).unwrap();
+
+    // parse the game information
+    let id = caps.get(1).map_or("0", |m| m.as_str()).parse::<u32>().unwrap();
+    let rounds = caps.get(2).map_or("", |m| m.as_str());
+
+    // parse the rounds of each game
+    for round in rounds.split(";") {
+        return_vec.push(round
+            .split(",")
+            .map(|m| {
+                let this: Vec <_> = m.split_whitespace().collect();
+                // (number, color)
+                (this[0].parse::<i32>().unwrap(), this[1])
+            })
+            .collect::<Vec<_>>()
+        );
+    }
+
+    (id, return_vec)
+}
+
 fn part1(input: &str) -> u32 {
     let mut sum: u32 = 0;
-    let re = Regex::new(r"^Game (?P<id>\d+): (?P<rounds>.+)$").unwrap();
     'game: for line in input.lines() {
         // parse the line to get the game ID and rounds
-        let caps = re.captures(line).unwrap();
-        // ID of the current game
-        let id = caps["id"].parse::<u32>().unwrap();
-
-        // parse the rounds and their movies
-        let rounds = caps["rounds"]
-            // rounds are separated by ';'
-            .split(";")
-            .map(|round| {
-                let moves = round
-                    // each move in a round is separated by a ','
-                    .split(",")
-                    .map(|mv| {
-                        let iter: Vec<_> = mv.split_whitespace().collect();
-                        // (number, color)
-                        (iter[0].parse::<i32>().unwrap(), iter[1])
-                    })
-                    .collect::<Vec<_>>();
-                moves
-            })
-            .collect::<Vec<_>>();
+        let (id, rounds) = parse_game(line);
 
         // iterate over the rounds of this game
         for round in rounds {

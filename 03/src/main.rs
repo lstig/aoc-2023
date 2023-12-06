@@ -24,7 +24,7 @@ fn parse_schematic(input: &str) -> Vec<Vec<char>> {
     schematic
 }
 
-fn search<'a>(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize, j: usize) -> (bool, String) {
+fn search(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize, j: usize) -> (bool, String) {
     let mut return_num = schematic[i][j].to_string();
     let mut adjacent = false;
 

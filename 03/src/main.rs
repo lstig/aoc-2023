@@ -24,7 +24,7 @@ fn parse_schematic(input: &str) -> Vec<Vec<char>> {
     schematic
 }
 
-fn search(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize, j: usize) -> (bool, String) {
+fn find_parts(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize, j: usize) -> (bool, String) {
     let mut return_num = schematic[i][j].to_string();
     let mut adjacent = false;
 
@@ -36,7 +36,7 @@ fn search(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize, j:
     let (k, l) = (i, j + 1);
     if k < cols && l < rows && schematic[k][l].is_numeric() {
         let mut _s: String = String::new();
-        (adjacent, _s) = search(schematic, visited, k, l);
+        (adjacent, _s) = find_parts(schematic, visited, k, l);
         return_num.push_str(&_s);
 
     }
@@ -73,7 +73,7 @@ fn part1(input: &str) -> i32 {
             if visited[i][j] {
                 continue
             } else if c.is_numeric() {
-                let (is_part, num) = search(&schematic, &mut visited, i, j);
+                let (is_part, num) = find_parts(&schematic, &mut visited, i, j);
                 if is_part {
                     sum += num.parse::<i32>().unwrap();
                 }
@@ -113,9 +113,18 @@ mod tests {
     #[test]
     fn check_part2() {
         let input = indoc! {"
-            TODO"
+            467..114..
+            ...*......
+            ..35..633.
+            ......#...
+            617*......
+            .....+.58.
+            ..592.....
+            ......755.
+            ...$.*....
+            .664.598.."
         };
         let result = part2(input);
-        assert_eq!(result, 0)
+        assert_eq!(result, 467835)
     }
 }

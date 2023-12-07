@@ -5,7 +5,7 @@ fn main() {
     println!("Part 2: {}", part2(input));
 }
 
-const COORDS: [(isize,isize);8] = [
+const COORDS: [(isize, isize); 8] = [
     (0, 1),
     (1, -1),
     (1, 0),
@@ -37,7 +37,12 @@ fn check_coord(schematic: &Vec<Vec<char>>, i: isize, j: isize) -> Option<(usize,
     Some((i as usize, j as usize))
 }
 
-fn find_parts(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize, j: usize) -> (bool, String) {
+fn find_parts(
+    schematic: &Vec<Vec<char>>,
+    visited: &mut Vec<Vec<bool>>,
+    i: usize,
+    j: usize,
+) -> (bool, String) {
     let mut return_num = schematic[i][j].to_string();
     let mut adjacent = false;
 
@@ -55,7 +60,7 @@ fn find_parts(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize
 
     // no need to keep checking, return immediately
     if adjacent {
-        return (adjacent, return_num.clone())
+        return (adjacent, return_num.clone());
     }
 
     // check all the adjacent coordinates for special characters
@@ -73,15 +78,38 @@ fn find_parts(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize
 fn gear_ratio(schematic: &Vec<Vec<char>>, i: usize, j: usize) -> i32 {
     let mut count = 0;
     let mut ratio = 1;
+    let mut visited = vec![vec![false; schematic[0].len()]; schematic.len()];
 
     // check all the adjacent coordinates for numeric characters
     for (x, y) in COORDS {
         if let Some((i, j)) = check_coord(schematic, i as isize + x, j as isize + y) {
-            if schematic[i][j].is_numeric() {
+            if schematic[i][j].is_numeric() && !visited[i][j] {
                 count += 1;
-                let mut num: String = String::new();
-                num.ap
+                let mut num = String::new();
 
+                // look for numbers to the right
+                for (k, c) in schematic[i][j..].iter().enumerate() {
+                    if c.is_numeric() {
+                        visited[i][j + k] = true;
+                        num.push(*c);
+                    } else {
+                        break;
+                    }
+                }
+
+                // look for numbers to the left
+                for (k, c) in schematic[i][..j].iter().rev().enumerate() {
+                    if c.is_numeric() {
+                        visited[i][j - 1 - k] = true;
+                        let mut s = c.to_string();
+                        s.push_str(num.as_str());
+                        num = s;
+                    } else {
+                        break;
+                    }
+                }
+
+                ratio *= num.parse::<i32>().unwrap();
             }
         }
     }
@@ -101,7 +129,7 @@ fn part1(input: &str) -> i32 {
     for (i, row) in schematic.iter().enumerate() {
         for (j, c) in row.iter().enumerate() {
             if visited[i][j] {
-                continue
+                continue;
             } else if c.is_numeric() {
                 let (is_part, num) = find_parts(&schematic, &mut visited, i, j);
                 if is_part {
@@ -118,8 +146,8 @@ fn part2(input: &str) -> i32 {
     let mut sum = 0;
     for (i, row) in schematic.iter().enumerate() {
         for (j, c) in row.iter().enumerate() {
-             if *c == '*' {
-                 sum += gear_ratio(&schematic, i, j);
+            if *c == '*' {
+                sum += gear_ratio(&schematic, i, j);
             }
         }
     }

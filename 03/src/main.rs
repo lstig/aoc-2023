@@ -24,21 +24,30 @@ fn parse_schematic(input: &str) -> Vec<Vec<char>> {
     schematic
 }
 
+fn check_coord(schematic: &Vec<Vec<char>>, i: isize, j: isize) -> Option<(usize, usize)> {
+    // get size for bounds checking
+    let rows = schematic.len() as isize;
+    let cols = schematic[0].len() as isize;
+
+    // check bounds
+    if i >= rows || j >= cols || i < 0 || j < 0 {
+        return None;
+    }
+
+    Some((i as usize, j as usize))
+}
+
 fn find_parts(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize, j: usize) -> (bool, String) {
     let mut return_num = schematic[i][j].to_string();
     let mut adjacent = false;
 
-    // get size for bounds checking
-    let rows = schematic.len();
-    let cols = schematic[i].len();
-
     // check the cell to the right, if it's numeric keep searching
-    let (k, l) = (i, j + 1);
-    if k < cols && l < rows && schematic[k][l].is_numeric() {
-        let mut _s: String = String::new();
-        (adjacent, _s) = find_parts(schematic, visited, k, l);
-        return_num.push_str(&_s);
-
+    if let Some((i, j)) = check_coord(schematic, i as isize, j as isize + 1) {
+        if schematic[i][j].is_numeric() {
+            let mut _s: String = String::new();
+            (adjacent, _s) = find_parts(schematic, visited, i, j);
+            return_num.push_str(&_s);
+        }
     }
 
     // set this position as visited so we can skip it in the calling function
@@ -51,17 +60,38 @@ fn find_parts(schematic: &Vec<Vec<char>>, visited: &mut Vec<Vec<bool>>, i: usize
 
     // check all the adjacent coordinates for special characters
     for (x, y) in COORDS {
-        let (i_bound, j_bound) = (i as isize + x, j as isize + y);
-        if i_bound >= rows as isize || j_bound >= cols as isize || i_bound < 0 || j_bound < 0 {
-            continue
-        }
-        let (k, l) = (i_bound as usize, j_bound as usize);
-        if !schematic[k][l].is_numeric() && schematic[k][l] != '.' {
-            adjacent = true;
-            break;
+        if let Some((i, j)) = check_coord(schematic, i as isize + x, j as isize + y) {
+            if !schematic[i][j].is_numeric() && schematic[i][j] != '.' {
+                adjacent = true;
+                break;
+            }
         }
     }
     (adjacent, return_num.clone())
+}
+
+fn gear_ratio(schematic: &Vec<Vec<char>>, i: usize, j: usize) -> i32 {
+    let mut count = 0;
+    let mut ratio = 1;
+
+    // check all the adjacent coordinates for numeric characters
+    for (x, y) in COORDS {
+        if let Some((i, j)) = check_coord(schematic, i as isize + x, j as isize + y) {
+            if schematic[i][j].is_numeric() {
+                count += 1;
+                let mut num: String = String::new();
+                num.ap
+
+            }
+        }
+    }
+
+    // invalid gear, set the ration to zero
+    if count != 2 {
+        ratio = 0
+    }
+
+    ratio
 }
 
 fn part1(input: &str) -> i32 {
@@ -84,7 +114,16 @@ fn part1(input: &str) -> i32 {
 }
 
 fn part2(input: &str) -> i32 {
-    todo!()
+    let schematic = parse_schematic(input);
+    let mut sum = 0;
+    for (i, row) in schematic.iter().enumerate() {
+        for (j, c) in row.iter().enumerate() {
+             if *c == '*' {
+                 sum += gear_ratio(&schematic, i, j);
+            }
+        }
+    }
+    sum
 }
 
 #[cfg(test)]

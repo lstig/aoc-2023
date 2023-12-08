@@ -5,11 +5,11 @@ fn main() {
     println!("Part 2: {}", part2(input));
 }
 
-fn part1(input: &str) -> i32 {
+fn part1(_input: &str) -> i32 {
     todo!()
 }
 
-fn part2(input: &str) -> u32 {
+fn part2(_input: &str) -> u32 {
     todo!()
 }
 

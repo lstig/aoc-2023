@@ -1,7 +1,8 @@
 use regex::Regex;
 use std::cmp::min;
-use std::collections::HashSet;
 use std::ops::Range;
+
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -10,7 +11,7 @@ fn main() {
     println!("Part 2: {}", part2(input));
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct MapperRange {
     source: Range<u64>,
     destination: Range<u64>,
@@ -31,13 +32,29 @@ impl Mapper {
             .split_whitespace()
             .map(|n| n.parse::<u64>().unwrap())
             .collect();
-        self.ranges.push(MapperRange {
+        let r = MapperRange {
             source: r[1]..r[1] + r[2],
             destination: r[0]..r[0] + r[2],
-        });
+        };
+
+        match self.ranges.binary_search_by(|m| m.source.start.cmp(&r.source.start)) {
+            Err(pos) => self.ranges.insert(pos, r),
+            _ => {}
+        }
     }
 
-    fn map(&self, n: u64) -> u64 {
+    // fill in gaps in the ranges created by the mapper
+    fn fill(&mut self) {
+        let mut current = 0;
+        for range in self.ranges.clone().into_iter().map(|m| m.source.clone()) {
+            if current < range.start {
+                self.add_range(format!("{current} {current} {}", range.start).as_str());
+                current = range.end
+            }
+        }
+    }
+
+    fn translate(&self, n: u64) -> u64 {
         for range in &self.ranges {
             if range.source.contains(&n) {
                 let diff = n - range.source.start;
@@ -48,6 +65,10 @@ impl Mapper {
         // no range contains, return the original number
         n
     }
+}
+
+fn translate(mappers: &Vec<Mapper>, seed: u64) -> u64 {
+    mappers.iter().fold(seed, |acc, m| m.translate(acc))
 }
 
 fn parse_input(input: &str) -> (Vec<u64>, Vec<Mapper>) {
@@ -65,13 +86,14 @@ fn parse_input(input: &str) -> (Vec<u64>, Vec<Mapper>) {
         .collect();
 
     // parse mappers and their ranges
-    let mappers: Vec<Mapper> = iter
+    let mappers: Vec<_> = iter
         .map(|chunk| {
             let mut mapper = Mapper::new();
             chunk
                 .lines()
                 .skip(1)
                 .for_each(|line| mapper.add_range(line));
+            mapper.fill();
             mapper
         })
         .collect();
@@ -85,15 +107,25 @@ fn part1(input: &str) -> u64 {
     // get location of each seed
     let mut lowest: Option<u64> = None;
     for seed in seeds {
-        let location = mappers.iter().fold(seed, |acc, m| m.map(acc));
-        lowest = Some(min(location, lowest.unwrap_or(seed)));
+        let location = translate(&mappers, seed);
+        lowest = Some(min(location, lowest.unwrap_or(location)));
     }
-
     lowest.unwrap()
 }
 
 fn part2(input: &str) -> u64 {
-    todo!()
+    let (seeds, mappers) = parse_input(input);
+
+    // get ranges of seeds
+    let seed_ranges: Vec<_> = seeds.chunks(2).map(|r| r[0]..r[0] + r[1]).collect();
+
+    let location = seed_ranges
+        .into_par_iter()
+        .flat_map(|range| range.clone())
+        .map(|seed| translate(&mappers, seed))
+        .min();
+
+    location.unwrap()
 }
 
 #[cfg(test)]

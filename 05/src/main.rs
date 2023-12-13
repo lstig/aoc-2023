@@ -1,8 +1,6 @@
 use regex::Regex;
-use std::cmp::min;
+use std::cmp;
 use std::ops::Range;
-
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 fn main() {
     let input = include_str!("input.txt");
@@ -37,7 +35,10 @@ impl Mapper {
             destination: r[0]..r[0] + r[2],
         };
 
-        match self.ranges.binary_search_by(|m| m.source.start.cmp(&r.source.start)) {
+        match self
+            .ranges
+            .binary_search_by(|m| m.source.start.cmp(&r.source.start))
+        {
             Err(pos) => self.ranges.insert(pos, r),
             _ => {}
         }
@@ -65,10 +66,6 @@ impl Mapper {
         // no range contains, return the original number
         n
     }
-}
-
-fn translate(mappers: &Vec<Mapper>, seed: u64) -> u64 {
-    mappers.iter().fold(seed, |acc, m| m.translate(acc))
 }
 
 fn parse_input(input: &str) -> (Vec<u64>, Vec<Mapper>) {
@@ -107,8 +104,8 @@ fn part1(input: &str) -> u64 {
     // get location of each seed
     let mut lowest: Option<u64> = None;
     for seed in seeds {
-        let location = translate(&mappers, seed);
-        lowest = Some(min(location, lowest.unwrap_or(location)));
+        let location = mappers.iter().fold(seed, |acc, m| m.translate(acc));
+        lowest = Some(cmp::min(location, lowest.unwrap_or(location)));
     }
     lowest.unwrap()
 }
@@ -117,15 +114,38 @@ fn part2(input: &str) -> u64 {
     let (seeds, mappers) = parse_input(input);
 
     // get ranges of seeds
-    let seed_ranges: Vec<_> = seeds.chunks(2).map(|r| r[0]..r[0] + r[1]).collect();
+    let mut seeds: Vec<_> = seeds.chunks(2).map(|r| r[0]..r[0] + r[1]).collect();
 
-    let location = seed_ranges
-        .into_par_iter()
-        .flat_map(|range| range.clone())
-        .map(|seed| translate(&mappers, seed))
-        .min();
+    for mapper in mappers {
+        let mut translated = Vec::new();
+        while seeds.len() > 0 {
+            let seed = seeds.pop().unwrap();
+            let mut found = false;
+            for range in &mapper.ranges {
+                if range.source.contains(&seed.start) && range.source.contains(&seed.end) {
+                    // current seed's range is entirely within the current range
+                    translated.push(mapper.translate(seed.start)..mapper.translate(seed.end));
+                    found = true;
+                    break;
+                } else if range.source.contains(&seed.start) {
+                    // current seed's range starts in the current range, but overlaps into the next range
+                    translated
+                        .push(mapper.translate(seed.start)..mapper.translate(range.source.end - 1));
+                    // push the remaining part of this seed's range onto the seed vector
+                    seeds.push(range.source.end..seed.end);
+                    found = true;
+                    break;
+                }
+            }
+            if !found {
+                // seed wasn't in any ranges, just push it onto the translated vector
+                translated.push(seed);
+            }
+        }
+        seeds = translated;
+    }
 
-    location.unwrap()
+    seeds.iter().map(|r| r.start).min().unwrap()
 }
 
 #[cfg(test)]

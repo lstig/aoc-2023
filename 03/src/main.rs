@@ -159,39 +159,28 @@ mod tests {
     use super::*;
     use indoc::indoc;
 
+    static INPUT: &str = indoc! {"
+        467..114..
+        ...*......
+        ..35..633.
+        ......#...
+        617*......
+        .....+.58.
+        ..592.....
+        ......755.
+        ...$.*....
+        .664.598.."
+    };
+
     #[test]
     fn check_part1() {
-        let input = indoc! {"
-            467..114..
-            ...*......
-            ..35..633.
-            ......#...
-            617*......
-            .....+.58.
-            ..592.....
-            ......755.
-            ...$.*....
-            .664.598.."
-        };
-        let result = part1(input);
+        let result = part1(INPUT);
         assert_eq!(result, 4361)
     }
 
     #[test]
     fn check_part2() {
-        let input = indoc! {"
-            467..114..
-            ...*......
-            ..35..633.
-            ......#...
-            617*......
-            .....+.58.
-            ..592.....
-            ......755.
-            ...$.*....
-            .664.598.."
-        };
-        let result = part2(input);
+        let result = part2(INPUT);
         assert_eq!(result, 467835)
     }
 }

@@ -24,7 +24,6 @@ fn score_card(input: &str) -> (u32, i32) {
         .split_whitespace()
         .map(|m| m.parse::<i32>().unwrap());
 
-
     for pick in picks {
         if winners.contains(&pick) {
             wins = Some(wins.unwrap_or(-1) + 1);
@@ -51,7 +50,7 @@ fn part1(input: &str) -> i32 {
 
 fn count_cards(cards: &Vec<&str>, visited: &mut HashMap<usize, u32>, card: &str, i: usize) -> u32 {
     if let Some(count) = visited.get(&i) {
-        return *count
+        return *count;
     }
 
     let (count, _) = score_card(card);

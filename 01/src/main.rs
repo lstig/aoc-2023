@@ -46,13 +46,16 @@ fn part2(input: &str) -> u32 {
     let mut sum = 0;
     let nummap: HashMap<_, _> = NUMS.into_iter().collect();
     let patterns = &[
-        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-        "one","two","three","four","five","six","seven","eight","nine"
+        "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four", "five",
+        "six", "seven", "eight", "nine",
     ];
     let re = AhoCorasick::new(patterns).unwrap();
     for line in input.lines() {
         let mut value = String::from("");
-        let matches: Vec<_> = re.find_overlapping_iter(line).map(|m| { m.pattern() }).collect();
+        let matches: Vec<_> = re
+            .find_overlapping_iter(line)
+            .map(|m| m.pattern())
+            .collect();
 
         for id in vec![matches[0], matches[matches.len() - 1]] {
             let m = patterns[id.as_usize()];

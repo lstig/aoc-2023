@@ -41,8 +41,31 @@ fn part1(input: &str) -> u32 {
     wins.into_iter().reduce(|acc, e| acc * e).unwrap()
 }
 
-fn part2(_input: &str) -> u32 {
-    todo!()
+fn part2(input: &str) -> u32 {
+    let time: Vec<_> = input
+        .lines()
+        .nth(0) // first line contains Time
+        .unwrap()
+        .split_whitespace()
+        .skip(1) // skip the line label
+        .collect();
+    let time = time.join("").parse::<u64>().unwrap();
+    let distance: Vec<_> = input
+        .lines()
+        .nth(1) // second line contains Distance
+        .unwrap()
+        .split_whitespace()
+        .skip(1) // skip the line label
+        .collect();
+    let distance = distance.join("").parse::<u64>().unwrap();
+
+    let mut wins = 0;
+    for (hold, accelerate) in (0..=time).rev().enumerate() {
+        if hold as u64 * accelerate > distance {
+            wins += 1;
+        }
+    }
+    wins
 }
 
 #[cfg(test)]
@@ -64,6 +87,6 @@ mod tests {
     #[test]
     fn check_part2() {
         let result = part2(INPUT);
-        assert_eq!(result, 0)
+        assert_eq!(result, 71503)
     }
 }

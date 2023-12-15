@@ -7,6 +7,10 @@ static CARDS: [char; 13] = [
     '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A',
 ];
 
+static JOKER_CARDS: [char; 13] = [
+    'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A',
+];
+
 #[derive(PartialOrd, Ord, PartialEq, Eq, Debug)]
 enum HandKind {
     // all cards' labels are distinct: 23456
@@ -26,7 +30,7 @@ enum HandKind {
 }
 
 impl HandKind {
-    fn from_string(string: &str) -> Self {
+    fn from_string(string: &str, joker: bool) -> Self {
         let mut cards = HashMap::new();
 
         // count the occurrences of each card
@@ -40,20 +44,51 @@ impl HandKind {
         }
 
         match cards.len() {
-            5 => return HighCard,
-            4 => return OnePair,
-            3 => {
-                return if cards.values().into_iter().any(|card| *card == 3) {
-                    ThreeOfAKind
+            5 => {
+                return if joker && cards.contains_key(&'J') {
+                    OnePair
                 } else {
-                    TwoPair
+                    HighCard
                 }
             }
-            2 => {
-                return if cards.values().into_iter().any(|card| *card == 4) {
-                    FourOfAKind
+            4 => {
+                return if joker && cards.contains_key(&'J') {
+                    ThreeOfAKind
                 } else {
-                    FullHouse
+                    OnePair
+                };
+            }
+            3 => {
+                let toak = cards.values().into_iter().any(|card| *card == 3);
+                return if joker && cards.contains_key(&'J') {
+                    let jokers = cards.get(&'J').unwrap();
+                    if toak {
+                        FourOfAKind
+                    } else {
+                        if *jokers == 2 {
+                            FourOfAKind
+                        } else {
+                            FullHouse
+                        }
+                    }
+                } else {
+                    if toak {
+                        ThreeOfAKind
+                    } else {
+                        TwoPair
+                    }
+                };
+            }
+            2 => {
+                return if joker && cards.contains_key(&'J') {
+                    FiveOfAKind
+                } else {
+                    let foak = cards.values().into_iter().any(|card| *card == 4);
+                    if foak {
+                        FourOfAKind
+                    } else {
+                        FullHouse
+                    }
                 }
             }
             1 => return FiveOfAKind,
@@ -66,6 +101,7 @@ impl HandKind {
 struct Hand<'a> {
     cards: &'a str,
     bet: u32,
+    joker: bool,
     kind: HandKind,
 }
 
@@ -75,8 +111,15 @@ impl Ord for Hand<'_> {
             // If hand kinds are equal, compare their cards
             Ordering::Equal => {
                 // build HashMap of cards and their values
-                let cards: HashMap<_, _> =
-                    CARDS.into_iter().enumerate().map(|(v, c)| (c, v)).collect();
+                let cards: HashMap<_, _> = if self.joker {
+                    JOKER_CARDS
+                        .into_iter()
+                        .enumerate()
+                        .map(|(v, c)| (c, v))
+                        .collect()
+                } else {
+                    CARDS.into_iter().enumerate().map(|(v, c)| (c, v)).collect()
+                };
                 // compare each card in each hand
                 for (i, card) in self.cards.chars().into_iter().enumerate() {
                     let other = other.cards.as_bytes()[i] as char;
@@ -112,7 +155,7 @@ fn main() {
     println!("Part 2: {}", part2(input));
 }
 
-fn parse_input(input: &str) -> Vec<Hand> {
+fn parse_input(input: &str, joker: bool) -> Vec<Hand> {
     let mut hands = Vec::new();
     for line in input.lines() {
         let mut iter = line.split_whitespace();
@@ -123,7 +166,8 @@ fn parse_input(input: &str) -> Vec<Hand> {
         let hand = Hand {
             cards,
             bet,
-            kind: HandKind::from_string(cards),
+            joker,
+            kind: HandKind::from_string(cards, joker),
         };
         match hands.binary_search(&hand) {
             Err(pos) => hands.insert(pos, hand),
@@ -134,15 +178,19 @@ fn parse_input(input: &str) -> Vec<Hand> {
 }
 
 fn part1(input: &str) -> u32 {
-    let hands = parse_input(input);
+    let hands = parse_input(input, false);
     hands
         .iter()
         .enumerate()
         .fold(0, |acc, (pos, hand)| acc + hand.bet * (pos as u32 + 1))
 }
 
-fn part2(_input: &str) -> u32 {
-    0
+fn part2(input: &str) -> u32 {
+    let hands = parse_input(input, true);
+    hands
+        .iter()
+        .enumerate()
+        .fold(0, |acc, (pos, hand)| acc + hand.bet * (pos as u32 + 1))
 }
 
 #[cfg(test)]
@@ -167,6 +215,6 @@ mod tests {
     #[test]
     fn check_part2() {
         let result = part2(INPUT);
-        assert_eq!(result, 0)
+        assert_eq!(result, 5905)
     }
 }

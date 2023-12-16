@@ -13,9 +13,9 @@ fn next_number(numbers: Vec<i32>) -> i32 {
     }
 
     // Get the next number from the line after ours so we can calculate our next number
-    let next_child = next_number(numbers.windows(2).map(|e| e[0] - e[1]).collect());
+    let next_child = next_number(numbers.windows(2).map(|e| e[1] - e[0]).collect());
 
-    return numbers[numbers.len() - 1] - next_child;
+    return numbers[numbers.len() - 1] + next_child;
 }
 
 // Given a vector of numbers, returns the next number in the current line
